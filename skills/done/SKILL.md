@@ -94,13 +94,68 @@ Find the task row and update:
 ### ~~TASK-XXX~~: Title (✅ DONE)
 ```
 
-#### 4d. Verify All Updated
+#### 4d. Verify Subtask Bullets One by One
 
-Search for the task ID and confirm all occurrences show strikethrough or ✅ DONE:
+Collect all `- [ ]` bullets within the task's `###` section. For each one, determine how to verify it:
+
+**If a directly related test exists and tests passed (Step 3):**
+A bullet is considered test-covered if the test name, file, or output explicitly references the same feature or behavior described in the bullet. Mark it `[x]` automatically.
+
+**Otherwise — interview the user for each unchecked bullet:**
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "Was this subtask completed? \"[subtask text]\"",
+    header: "Subtask",
+    multiSelect: false,
+    options: [
+      { label: "Yes — mark complete", description: "Change [ ] to [x]" },
+      { label: "No — leave incomplete", description: "Keep as [ ] for follow-up" }
+    ]
+  }]
+})
+```
+
+- **Yes** → change `- [ ]` to `- [x]`
+- **No** → leave as `- [ ]` and record in an **incomplete list**
+
+**After reviewing all bullets — decide the outcome:**
+
+- **All bullets are `[x]`** → proceed to mark the task ✅ DONE (steps 4e–4f)
+- **Any bullet remains `[ ]`** → the task is NOT done. Skip steps 4a, 4c, 4e, 4f entirely. Instead:
+  1. Keep the `###` section header as-is (do not add strikethrough or ✅)
+  2. Update `**Status**:` to `IN PROGRESS (YYYY-MM-DD)` with today's date
+  3. Leave the section in `## Active Work` — do NOT move it to `## Completed`
+  4. Commit and push the progress (using `wip(TASK-XXX):` prefix), then report incomplete items (Step 6)
+
+#### 4e. Update the **Status**: Line (fully complete tasks only)
+
+Find the `**Status**:` line inside the task's `###` section and replace it:
+
+```markdown
+# Before:
+**Status**: IN PROGRESS (2026-02-23)
+
+# After:
+**Status**: ✅ DONE (YYYY-MM-DD)
+```
+
+Use today's date.
+
+#### 4f. Move Section to ## Completed (fully complete tasks only)
+
+Cut the entire `###` block (from the `### ~~TASK-XXX~~:` header line down to, but not including, the next `###` or `##` heading) and append it under the `## Completed` section. If no `## Completed` section exists, create one at the end of the file.
+
+**Never move a section with unchecked `- [ ]` bullets to `## Completed`.**
+
+#### 4g. Verify All Updated
 
 ```bash
 grep "TASK-XXX" docs/MASTER_PLAN.md
 ```
+
+Confirm: if fully complete, all occurrences show strikethrough and ✅ DONE. If incomplete, confirm the section remains in Active Work with IN PROGRESS status.
 
 ### Step 5: Commit and Push
 
@@ -152,17 +207,38 @@ git push
 
 ### Step 6: Report Completion
 
-Output this summary:
+**If all subtasks were completed:**
 
 ```
-## Task Complete
+## ✅ Task Complete
 
 - **Task**: TASK-XXX (or "Quick fix")
 - **Summary**: [user's summary]
 - **Tests**: ✅ Passed (or ⏭️ Skipped)
+- **Subtasks**: ✅ All complete
 - **Commit**: [short hash] — [message]
 - **Push**: ✅ Pushed to origin
-- **MASTER_PLAN.md**: Updated / N/A
+- **MASTER_PLAN.md**: Moved to Completed
+```
+
+**If any subtasks remain incomplete:**
+
+```
+## 🔄 Progress Saved — Task Still In Progress
+
+- **Task**: TASK-XXX
+- **Summary**: [user's summary]
+- **Tests**: ✅ Passed / ⏭️ Skipped
+- **Subtasks**: ⚠️ [N] incomplete (see below)
+- **Commit**: [short hash] — wip(TASK-XXX): [message]
+- **Push**: ✅ Pushed to origin
+- **MASTER_PLAN.md**: Remains IN PROGRESS in Active Work
+
+### Incomplete Subtasks
+- [ ] [subtask text]
+- [ ] [subtask text]
+
+Run `/master-plan:next` to pick this task back up and finish these items.
 ```
 
 ## Important Rules
@@ -173,6 +249,9 @@ Output this summary:
 4. **Verify with grep** after updating MASTER_PLAN.md
 5. **Wait for user input** — Don't assume or skip questions
 6. **Test failures block completion** — If tests fail, stop and report
+7. **All subtasks must be `[x]` before marking DONE** — A task with any `[ ]` bullet stays IN PROGRESS
+8. **`## Completed` is for fully finished tasks only** — Never move a section there while any subtask is unchecked
+9. **Tests only auto-check bullets with an explicitly related test** — All other unchecked bullets require user confirmation
 
 ## Files to NEVER Commit
 

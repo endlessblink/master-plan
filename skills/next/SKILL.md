@@ -132,7 +132,11 @@ AskUserQuestion({
 
 If "Start working on this" is selected:
 1. Update the task's status to `IN PROGRESS` in MASTER_PLAN.md (all locations — see update rules below)
-2. Confirm: "Started TASK-XXX. Ready to begin implementation."
+2. Update the `**Status**:` line inside the task's `###` section to reflect the current date:
+   ```markdown
+   **Status**: IN PROGRESS (YYYY-MM-DD)
+   ```
+3. Confirm: "Started TASK-XXX. Ready to begin implementation."
 
 ## MASTER_PLAN.md Update Rules
 
